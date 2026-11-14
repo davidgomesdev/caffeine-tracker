@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Caffeine">
+<title>Caffeine</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px system-ui,sans-serif;background:#fff;color:#222;padding:max(14px,env(safe-area-inset-top)) 14px 14px}
+main{max-width:430px;margin:auto}
+[hidden]{display:none!important}
+h1{font-size:18px;margin:0 0 12px}
+#btns{display:flex;flex-direction:column;gap:14px}
+.b{position:relative;border-radius:18px;padding:26px 16px;font-size:22px;font-weight:700;text-align:center;
+  background:var(--c);color:#fff;border:4px solid var(--c);font-family:inherit}
+.b small{display:block;font-size:12px;font-weight:500;margin-top:4px;min-height:1em}
+.b.on{background:#fff;color:var(--c)}
+.chk{position:absolute;top:-10px;right:-6px;background:#222;color:#fff;border-radius:999px;min-width:32px;height:32px;line-height:32px;font-size:15px}
+nav{display:flex;justify-content:space-between;margin-top:18px}
+nav button,.arrows button{background:none;border:0;font-size:16px;padding:8px;color:#06c;font-family:inherit}
+.arrows{display:flex;justify-content:space-between;align-items:center}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:11px;color:#666}
+.c{border:1px solid #bbb;border-radius:6px;min-height:92px;padding:2px;text-align:left;background:#fff;font-family:inherit}
+.c i{font-style:normal;font-size:11px;color:#666;display:block}
+.c span{display:block;font-size:14px;font-weight:700;line-height:1.3;white-space:nowrap}
+.c span b{font-size:22px;font-weight:400}
+.c.today{border:3px solid #2f8f4f}
+.c.x{border:0}
+dialog{border:2px solid #333;border-radius:16px;width:min(340px,92vw)}
+.r{display:flex;align-items:center;justify-content:space-between;font-size:20px;margin:10px 0}
+.r button{width:48px;height:48px;font-size:26px;border-radius:12px;border:1px solid #888;background:#fff}
+.r em{display:inline-block;min-width:28px;text-align:center;font-style:normal;font-weight:700}
+#toast{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));max-width:402px;margin:auto;background:#222;color:#fff;border-radius:12px;padding:14px;display:flex;justify-content:space-between}
+#toast button{background:none;border:0;color:#7cf;font-size:16px;font-family:inherit}
+</style>
+</head>
+<body>
+<main>
+  <section id="home">
+    <h1 id="today"></h1>
+    <div id="btns"></div>
+    <nav><button id="toCal">📅 Calendar</button><button id="csv">⬇ CSV</button></nav>
+  </section>
+  <section id="cal" hidden>
+    <div class="arrows"><button id="prev">‹</button><b id="mname"></b><button id="next">›</button></div>
+    <div class="g" id="grid"></div>
+    <nav><button id="toHome">← Back</button></nav>
+  </section>
+</main>
+<dialog id="dlg"><b id="dtitle"></b><div id="drows"></div><button id="done" style="width:100%;padding:12px;font-size:16px">Done</button></dialog>
+<div id="toast" hidden></div>
+<script>
+// <pure>
+const ITEMS=[
+  {k:'choc',e:'🍫',n:'Dark Chocolate',sub:'2 pieces',c:'#8a5a3b'},
+  {k:'coffee',e:'☕',n:'Coffee',sub:'',c:'#4a2c17'},
+  {k:'tea',e:'🍵',n:'Tea',sub:'',c:'#2f8f4f'}];
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; // local date, not UTC
+const bump=(db,day,k,n)=>{const d=db[day]||(db[day]={});d[k]=Math.max(0,(d[k]||0)+n);return db};
+const total=d=>ITEMS.reduce((s,i)=>s+((d||{})[i.k]||0),0);
+const toCSV=db=>'date,dark_chocolate,coffee,tea\n'+Object.keys(db).filter(d=>total(db[d])).sort()
+  .map(d=>[d,...ITEMS.map(i=>db[d][i.k]||0)].join(',')).join('\n')+'\n';
+// </pure>
+
+const $=id=>document.getElementById(id);
+const KEY='caffeine';
+let db;try{db=JSON.parse(localStorage.getItem(KEY))||{}}catch{db={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}};
+let month=new Date();month.setDate(1);
+let editing=null; // day open in the edit dialog
+
+function render(){
+  const day=ymd(new Date()),t=db[day]||{};
+  $('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · today';
+  $('btns').innerHTML=ITEMS.map(i=>{const n=t[i.k]||0;
+    return `<button class="b${n?' on':''}" data-k="${i.k}" style="--c:${i.c}">${i.e} ${i.n}<small>${n?'tap to add another':i.sub}</small>${n?`<span class="chk">✓${n}</span>`:''}</button>`}).join('');
+  $('mname').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const first=(month.getDay()+6)%7,days=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
+  let h='MTWTFSS'.split('').map(l=>`<div>${l}</div>`).join('')+'<div class="c x"></div>'.repeat(first);
+  for(let d=1;d<=days;d++){
+    const k=ymd(new Date(month.getFullYear(),month.getMonth(),d)),e=db[k]||{};
+    h+=`<button class="c${k===day?' today':''}" data-day="${k}"><i>${d}</i>`+
+      ITEMS.filter(i=>e[i.k]).map(i=>`<span style="color:${i.c}"><b>${i.e}</b>${e[i.k]}</span>`).join('')+'</button>';
+  }
+  $('grid').innerHTML=h;
+  if(editing)drawDialog();
+}
+function drawDialog(){
+  $('dtitle').textContent=new Date(editing+'T00:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  $('drows').innerHTML=ITEMS.map(i=>`<div class="r"><span>${i.e} ${i.n}</span><span><button data-k="${i.k}" data-n="-1">−</button><em>${(db[editing]||{})[i.k]||0}</em><button data-k="${i.k}" data-n="1">+</button></span></div>`).join('');
+}
+let tt;
+function toast(msg,undo){
+  const t=$('toast');t.innerHTML=`<span>${msg}</span><button>Undo</button>`;t.hidden=false;
+  t.querySelector('button').onclick=()=>{undo();t.hidden=true};
+  clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,4000);
+}
+
+$('btns').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const k=b.dataset.k,day=ymd(new Date()),it=ITEMS.find(i=>i.k===k);
+  if(((db[day]||{})[k]||0)>0&&!confirm(`Log another ${it.n}?`))return; // also blocks accidental double-tap
+  bump(db,day,k,1);save();render();
+  toast(`Logged ${it.n}`,()=>{bump(db,day,k,-1);save();render()});
+};
+$('toCal').onclick=()=>{$('home').hidden=true;$('cal').hidden=false};
+$('toHome').onclick=()=>{$('cal').hidden=true;$('home').hidden=false};
+$('prev').onclick=()=>{month.setMonth(month.getMonth()-1);render()};
+$('next').onclick=()=>{month.setMonth(month.getMonth()+1);render()};
+$('grid').onclick=e=>{const c=e.target.closest('[data-day]');if(c){editing=c.dataset.day;drawDialog();$('dlg').showModal()}};
+$('drows').onclick=e=>{const b=e.target.closest('button');if(b){bump(db,editing,b.dataset.k,+b.dataset.n);save();render()}};
+$('dlg').onclose=()=>{editing=null};
+$('done').onclick=()=>$('dlg').close();
+$('csv').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([toCSV(db)],{type:'text/csv'}));
+  a.download='caffeine.csv';a.click();
+};
+document.onvisibilitychange=()=>{if(!document.hidden)render()}; // day rollover
+render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
