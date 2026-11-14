@@ -6,6 +6,7 @@ One-tap caffeine log for a phone. Static page hosted on GitHub Pages. Data lives
 
 - `index.html`: the whole app (HTML, CSS, JS). No dependencies and no build step.
 - `sw.js`: service worker, network-first with cache fallback, so the page opens offline.
+- `icon.svg`: favicon. `icon.png` (180x180, rendered from it) is the iOS home-screen icon; re-render it if the SVG changes.
 - `test.mjs`: checks the pure logic. Run `node test.mjs`; it prints `ok` on success.
 
 ## Rules
