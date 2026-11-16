@@ -59,13 +59,14 @@ dialog{border:2px solid #333;border-radius:16px;width:min(340px,92vw)}
 const ITEMS=[
   {k:'choc',e:'🍫',n:'Dark Chocolate',sub:'2 pieces',c:'#8a5a3b'},
   {k:'coffee',e:'☕',n:'Coffee',sub:'',c:'#4a2c17'},
-  {k:'tea',e:'🍵',n:'Tea',sub:'',c:'#2f8f4f'}];
+  {k:'tea',e:'🍵',n:'Tea',sub:'',c:'#2f8f4f'},
+  {k:'chococoffee',e:'🫘',n:'Chocolate Coffee',sub:'',c:'#6b3f2a'}];
 const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; // local date, not UTC
 const bump=(db,day,k,n)=>{const d=db[day]||(db[day]={});d[k]=Math.max(0,(d[k]||0)+n);return db};
 const total=d=>ITEMS.reduce((s,i)=>s+((d||{})[i.k]||0),0);
 // every day from the first entry to today (or last entry), zeros included
 const toCSV=(db,today)=>{
-  const ks=Object.keys(db).sort(),rows=['date,dark_chocolate,coffee,tea'];
+  const ks=Object.keys(db).sort(),rows=['date,dark_chocolate,coffee,tea,chocolate_coffee'];
   if(ks.length){
     const last=ks[ks.length-1],end=new Date((last>today?last:today)+'T00:00');
     for(const d=new Date(ks[0]+'T00:00');d<=end;d.setDate(d.getDate()+1)){
