@@ -60,7 +60,7 @@ const ITEMS=[
   {k:'choc',e:'🍫',n:'Dark Chocolate',sub:'2 pieces',c:'#8a5a3b'},
   {k:'coffee',e:'☕',n:'Coffee',sub:'',c:'#4a2c17'},
   {k:'tea',e:'🍵',n:'Tea',sub:'',c:'#2f8f4f'},
-  {k:'chococoffee',e:'🫘',n:'Chocolate Coffee',sub:'',c:'#6b3f2a'}];
+  {k:'chocolate_coffee',e:'🫘',n:'Chocolate Coffee',sub:'',c:'#6b3f2a'}];
 const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; // local date, not UTC
 const bump=(db,day,k,n)=>{const d=db[day]||(db[day]={});d[k]=Math.max(0,(d[k]||0)+n);return db};
 const total=d=>ITEMS.reduce((s,i)=>s+((d||{})[i.k]||0),0);
