@@ -11,7 +11,7 @@ bump(db,'2026-11-14','coffee',1);bump(db,'2026-11-14','coffee',1);bump(db,'2026-
 bump(db,'2026-11-12','tea',1);bump(db,'2026-11-12','tea',-1);bump(db,'2026-11-12','tea',-1); // never negative
 assert.equal(db['2026-11-12'].tea,0);
 // gap day (13th) and days up to today (15th) are included as zeros
-assert.equal(toCSV(db,'2026-11-15'),'date,dark_chocolate,coffee,tea\n2026-11-12,0,0,0\n2026-11-13,0,0,0\n2026-11-14,1,2,0\n2026-11-15,0,0,0\n');
-assert.equal(toCSV({},'2026-11-15'),'date,dark_chocolate,coffee,tea\n');
-assert.equal(ITEMS.length,3);
+assert.equal(toCSV(db,'2026-11-15'),'date,dark_chocolate,coffee,tea,chocolate_coffee\n2026-11-12,0,0,0,0\n2026-11-13,0,0,0,0\n2026-11-14,1,2,0,0\n2026-11-15,0,0,0,0\n');
+assert.equal(toCSV({},'2026-11-15'),'date,dark_chocolate,coffee,tea,chocolate_coffee\n');
+assert.equal(ITEMS.length,4);
 console.log('ok');
